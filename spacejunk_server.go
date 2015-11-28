@@ -49,10 +49,7 @@ func main() {
             players[freeId].id = freeId;
             players[freeId].socket = so;
             
- 
-            
             so.Emit("spacejunk accept", freeId)
-            
             
             for i := 0; i < MAX_NUMBERS_OF_PLAYERS; i++ {
                 if players[i].id != -1 {
@@ -62,14 +59,14 @@ func main() {
             
             so.BroadcastTo("spacejunk", "spacejunk newPlayer", freeId)
             
-            so.On("spacejunk shootRocket", func(msg string) {
-                so.BroadcastTo("spacejunk", "spacejunk shootRocket", msg)
-            })
-            
             so.On("spacejunk shootPlayer", func(msg string) {
                 log.Println(msg)
                 so.Emit("spacejunk shootPlayer", msg)
                 so.BroadcastTo("spacejunk", "spacejunk shootPlayer", msg)
+            })
+            
+            so.On("spacejunk shootRocket", func(msg string) {
+                so.BroadcastTo("spacejunk", "spacejunk shootRocket", msg)
             })
             
             so.On("disconnection", func() {
