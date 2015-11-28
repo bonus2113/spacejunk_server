@@ -48,8 +48,10 @@ func main() {
             players[freeId].id = freeId;
             players[freeId].socket = so;
             
-            so.Emit("spacejunk accept", freeId)
             so.Join("spacejunk")
+            
+            so.Emit("spacejunk accept", freeId)
+            
             
             for i := 0; i < MAX_NUMBERS_OF_PLAYERS; i++ {
                 if players[i].id != -1 {
