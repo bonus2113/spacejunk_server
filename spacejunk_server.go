@@ -11,6 +11,8 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
+	
+	server.set('transports', [ 'websocket' ]);
     server.On("connection", func(so socketio.Socket) {
         log.Println("on connection")
         so.Join("chat")
