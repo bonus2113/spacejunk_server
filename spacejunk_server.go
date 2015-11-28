@@ -65,6 +65,7 @@ func main() {
             
             so.On("spacejunk shootPlayer", func(msg string) {
                 log.Println(msg)
+                so.Emit(msg)
                 so.BroadcastTo("spacejunk", "spacejunk shootPlayer", msg)
             })
             
