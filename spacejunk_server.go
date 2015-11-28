@@ -1,38 +1,33 @@
 package main
 
 import (
-	"fmt"
-	"net"
-	"encoding/gob"
+    "log"
+    "net/http"
+    "github.com/googollee/go-socket.io"
 )
 
-type P struct {
-	M, N int64
-}
-
-func handleConnection(conn net.Conn) {
-	dec := gob.NewDecoder(conn)
-	p := 0
-	dec.Decode(&p)
-
-	encoder := gob.NewEncoder(conn)
-    encoder.Encode(p * 2)
-
-	fmt.Printf("Received : %+v\n", p);
-}
-
 func main() {
-	fmt.Println("start");
-	ln, err := net.Listen("tcp", ":8080")
-	if err != nil {
-	    // handle error
-	}
-	for {
-		conn, err := ln.Accept() // this blocks until connection or error
-		if err != nil {
-			// handle error
-			continue
-		}
-		go handleConnection(conn) // a goroutine handles conn so that the loop can accept other connections
-	}
+    server, err := socketio.NewServer(nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    server.On("connection", func(so socketio.Socket) {
+        log.Println("on connection")
+        so.Join("chat")
+        so.On("chat message", func(msg string) {
+            log.Println("emit:", so.Emit("chat message", msg))
+            so.BroadcastTo("chat", "chat message", msg)
+        })
+        so.On("disconnection", func() {
+            log.Println("on disconnect")
+        })
+    })
+    server.On("error", func(so socketio.Socket, err error) {
+        log.Println("error:", err)
+    })
+
+    http.Handle("/socket.io/", server)
+    http.Handle("/", http.FileServer(http.Dir("./asset")))
+    log.Println("Serving at localhost:5000...")
+    log.Fatal(http.ListenAndServe(":5000", nil))
 }
