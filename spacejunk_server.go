@@ -63,6 +63,10 @@ func main() {
                 so.BroadcastTo("spacejunk", "spacejunk shootRocket", msg)
             })
             
+            so.On("spacejunk shootPlayer", func(msg string) {
+                so.BroadcastTo("spacejunk", "spacejunk shootPlayer", msg)
+            })
+            
             so.On("disconnection", func() {
                 log.Println("on disconnect")
                 players[freeId].id = -1
@@ -71,6 +75,12 @@ func main() {
         })
         
         so.On("spacejunk server", func(msg string) {
+            for i := 0; i < MAX_NUMBERS_OF_PLAYERS; i++ {
+                if players[i].id != -1 {
+                    so.Emit("spacejunk newPlayer", i)              
+                }
+            }
+            
             so.Join("spacejunk")
             main_client = so
         })
