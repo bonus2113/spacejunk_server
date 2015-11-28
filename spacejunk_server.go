@@ -6,24 +6,76 @@ import (
     "github.com/googollee/go-socket.io"
 )
 
+type player struct {
+    id int;
+    socket socketio.Socket;
+}
+
 func main() {
     server, err := socketio.NewServer(nil)
     if err != nil {
         log.Fatal(err)
     }
-	
-	server.set('transports', [ 'websocket' ]);
+    
+    var MAX_NUMBERS_OF_PLAYERS int = 5
+
+    var players [5]player;
+    
+    var main_client socketio.Socket;
+    
+    for i := 0; i < MAX_NUMBERS_OF_PLAYERS; i++ {
+        players[i].id = -1
+    }
+    
     server.On("connection", func(so socketio.Socket) {
         log.Println("on connection")
-        so.Join("chat")
-        so.On("chat message", func(msg string) {
-            log.Println("emit:", so.Emit("chat message", msg))
-            so.BroadcastTo("chat", "chat message", msg)
+        
+        so.On("spacejunk player", func(msg string) {
+            var freeId int = -1
+                    
+            for i := 0; i < MAX_NUMBERS_OF_PLAYERS; i++ {
+                if players[i].id == -1 {
+                    freeId = i                
+                    break
+                }
+            }
+            
+            if freeId == -1 {
+                so.Emit("disconnect")
+                return
+            }
+            
+            players[freeId].id = freeId;
+            players[freeId].socket = so;
+            
+            so.Emit("spacejunk accept", freeId)
+            so.Join("spacejunk")
+            
+            for i := 0; i < MAX_NUMBERS_OF_PLAYERS; i++ {
+                if players[i].id != -1 {
+                    so.Emit("spacejunk newPlayer", i)              
+                }
+            }
+            
+            so.BroadcastTo("spacejunk", "spacejunk newPlayer", freeId)
+            
+            so.On("spacejunk shootRocket", func(msg string) {
+                so.BroadcastTo("spacejunk", "spacejunk shootRocket", msg)
+            })
+            
+            so.On("disconnection", func() {
+                log.Println("on disconnect")
+                players[freeId].id = -1
+                so.BroadcastTo("spacejunk", "spacejunk playerLeft", freeId)
+            })
         })
-        so.On("disconnection", func() {
-            log.Println("on disconnect")
+        
+        so.On("spacejunk server", func(msg string) {
+            so.Join("spacejunk")
+            main_client = so
         })
     })
+    
     server.On("error", func(so socketio.Socket, err error) {
         log.Println("error:", err)
     })
