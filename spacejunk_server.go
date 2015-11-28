@@ -29,6 +29,7 @@ func main() {
     
     server.On("connection", func(so socketio.Socket) {
         log.Println("on connection")
+        so.Join("spacejunk")
         
         so.On("spacejunk player", func(msg string) {
             var freeId int = -1
@@ -48,7 +49,7 @@ func main() {
             players[freeId].id = freeId;
             players[freeId].socket = so;
             
-            so.Join("spacejunk")
+ 
             
             so.Emit("spacejunk accept", freeId)
             
@@ -85,7 +86,6 @@ func main() {
                 }
             }
             
-            so.Join("spacejunk")
             main_client = so
         })
     })
